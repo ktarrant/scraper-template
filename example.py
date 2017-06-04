@@ -44,17 +44,21 @@ def main(url):
     with urlopen(url) as webobj:
         soup = BeautifulSoup(webobj.read(), 'html.parser')
 
-    # Extract the headers
+    # Find the parent table
     parent_table = find_parent_table(soup)
-    header_row = find_header_row(parent_table)
-    headers = [clean_element_text(col) for col in find_header_columns(header_row)]
 
-    # Create the DataFrame
-    data_rows = find_all_data_rows(parent_table)
-    df = DataFrame(
-        [[clean_element_text(col) for col in find_all_data_columns(row)] for row in data_rows],
+    # We can create the headers in one step
+    headers = [ clean_element_text(col)
+        for col in find_header_columns(find_header_row(parent_table)) ]
+
+    # Create the DataFrame in more step
+    df = DataFrame([
+            [ clean_element_text(col) for col in find_all_data_columns(row) ]
+            for row in find_all_data_rows(parent_table) ],
         columns=headers)
-    return df.dropna() # Use dropna to drop any crap we might have picked up
+
+    # Use dropna to do a final cleanup
+    return df.dropna()
 
 if __name__ == "__main__":
     url = "http://www.scrapregister.com/scrap-prices/united-states/260"
